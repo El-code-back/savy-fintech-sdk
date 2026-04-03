@@ -1,0 +1,6 @@
+{
+  "name": "Savy - Financial Runway",
+  "version": "1.0.0-mvp",
+  "description": "A high-fidelity financial management app with real-time runway tracking, vaults, and credit insights.",
+  "requestFramePermissions": []
+}
