@@ -31,6 +31,8 @@ interface AppContextType extends AppState {
   emergencyUnlock: (vaultId: string, amount: number) => void;
   addVault: (vault: Omit<Vault, 'id' | 'current'>) => void;
   setIsWaterfallActive: (active: boolean) => void;
+  releaseFunds: (vaultId: string) => number;
+  accelerateGoal: (vaultId: string, amount: number) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -167,6 +169,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, isWaterfallActive: active }));
   };
 
+  // Release all funds from a vault to Main Balance, then zero out the vault.
+  // Returns the released amount (0 if vault not found).
+  const releaseFunds = (vaultId: string): number => {
+    let released = 0;
+    setState(prev => {
+      const vault = prev.vaults.find(v => v.id === vaultId);
+      if (!vault || vault.current <= 0) return prev;
+      released = vault.current;
+      return {
+        ...prev,
+        actualAvailable: prev.actualAvailable + released,
+        vaults: prev.vaults.map(v =>
+          v.id === vaultId ? { ...v, current: 0, hasWarning: false } : v
+        ),
+      };
+    });
+    return released;
+  };
+
+  // Move `amount` from Main Balance into a vault.
+  // Returns true on success, false if insufficient balance.
+  const accelerateGoal = (vaultId: string, amount: number): boolean => {
+    let success = false;
+    setState(prev => {
+      const vault = prev.vaults.find(v => v.id === vaultId);
+      if (!vault || prev.actualAvailable < amount || amount <= 0) return prev;
+      // Don't overshoot the target
+      const toAdd = Math.min(amount, vault.target - vault.current);
+      if (toAdd <= 0) return prev;
+      success = true;
+      return {
+        ...prev,
+        actualAvailable: prev.actualAvailable - toAdd,
+        vaults: prev.vaults.map(v =>
+          v.id === vaultId ? { ...v, current: v.current + toAdd } : v
+        ),
+      };
+    });
+    return success;
+  };
+
   return (
     <AppContext.Provider value={{ 
       ...state, 
@@ -177,7 +220,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addIncome, 
       emergencyUnlock, 
       addVault, 
-      setIsWaterfallActive 
+      setIsWaterfallActive,
+      releaseFunds,
+      accelerateGoal,
     }}>
       {children}
     </AppContext.Provider>

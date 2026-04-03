@@ -6,5 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const formatKGS = (amount: number) => {
-  return `${amount.toLocaleString('en-US').replace(/,/g, ' ')} сом`;
+  return `${Math.round(amount).toLocaleString('en-US').replace(/,/g, ' ')} сом`;
 };
