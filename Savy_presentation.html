@@ -1093,17 +1093,17 @@
                     <h3>Roadmap</h3>
                     <div class="roadmap">
                         <div class="roadmap-item">
-                            <div class="roadmap-date">Q2 2025</div>
+                            <div class="roadmap-date">Q2 2026</div>
                             <div class="roadmap-title">Пилот с первым банком</div>
                             <p class="roadmap-desc">Интеграция SDK, тест на 1,000 пользователей, валидация метрик удержания</p>
                         </div>
                         <div class="roadmap-item">
-                            <div class="roadmap-date">Q4 2025</div>
+                            <div class="roadmap-date">Q4 2026</div>
                             <div class="roadmap-title">Масштабирование в КР</div>
                             <p class="roadmap-desc">Подключение 2-3 банков, стандартизация интеграции, выход на 15,000 активных пользователей</p>
                         </div>
                         <div class="roadmap-item">
-                            <div class="roadmap-date">2026</div>
+                            <div class="roadmap-date">2027</div>
                             <div class="roadmap-title">Центральная Азия</div>
                             <p class="roadmap-desc">Казахстан, Узбекистан. Адаптация под местные регуляторные требования.</p>
                         </div>
@@ -1197,7 +1197,7 @@
                     </div>
                     
                     <p style="margin-top: 2rem; color: #888; font-size: 0.95rem;">
-                        При масштабировании на 3 банка (год 2) выручка $102K с той же командой разработки, маржинальность растет до 75%.
+                        При масштабировании на 3 банка (2027) выручка $102K с той же командой разработки, маржинальность растет до 75%.
                     </p>
                 </div>
             </div>
@@ -1242,7 +1242,7 @@
     </section>
 
     <!-- Slide 9: MVP Glitch -->
-    <section class="mvp-slide">
+    <section class="mvp-slide" id="mvp-section">
         <div class="container mvp-container">
             <h2 class="mvp-title">Статус разработки</h2>
             
@@ -1250,79 +1250,140 @@
                 <div class="progress-bar-bg" id="progressBar">
                     <div class="progress-fill" id="progressFill">68%</div>
                 </div>
-                <div class="progress-label">Нажмите на индикатор</div>
+                <div class="progress-label" id="progressLabel">Нажмите для завершения</div>
             </div>
         </div>
         
-        <div class="glitch-overlay" id="glitchOverlay">
-            <div class="qr-final" id="qrFinal">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='white' width='100' height='100'/%3E%3Cpath fill='black' d='M10 10h30v30H10zm5 5v20h20V15zm5 5h10v10H20zm40-10h30v30H60zm5 5v20h20V15zm5 5h10v10H70zM10 60h30v30H10zm5 5v20h20V65zm5 5h10v10H20zm15-5h5v5h-5zm5 0h5v5h-5zm5 0h5v5h-5zm0 5h5v5h-5zm-10 5h5v5h-5zm5 0h5v5h-5zm5 0h5v5h-5zm10-10h5v5h-5zm5 0h5v5h-5zm5 0h5v5h-5zm-15 5h5v5h-5zm10 0h5v5h-5zm5 0h5v5h-5zm-10 5h5v5h-5zm5 0h5v5h-5zm5 0h5v5h-5zm-15 5h5v5h-5zm10 0h5v5h-5zm5 0h5v5h-5zm-10 5h5v5h-5zm5 0h5v5h-5zm5 0h5v5h-5z'/%3E%3C/svg%3E" alt="MVP QR">
+        <canvas id="glitchCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; display: none;"></canvas>
+        
+        <div class="qr-overlay" id="qrOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; align-items: center; justify-content: center; z-index: 1000; flex-direction: column;">
+            <div class="qr-container" style="padding: 30px; background: white; border-radius: 12px; box-shadow: 0 0 100px rgba(124, 58, 237, 0.5);">
+                <img src="/mnt/kimi/upload/3f5e7b07-c2fa-4471-b661-4bc7810f929f.jpeg" alt="Savy MVP" style="width: 280px; height: 280px; display: block;">
             </div>
-            <div class="final-text" id="finalText">savy.kg/demo</div>
+            <div style="margin-top: 40px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 10px;">SAVY</div>
+                <div style="color: #666; font-size: 1rem;">savy.kg/demo</div>
+            </div>
+            <div style="position: absolute; bottom: 40px; color: #333; font-size: 0.9rem;">
+                Сканируйте для доступа к MVP
+            </div>
         </div>
     </section>
 
 <script>
-    const sections = document.querySelectorAll('section');
-    const dots = document.querySelectorAll('.nav-dot');
+const sections = document.querySelectorAll('section');
+const dots = document.querySelectorAll('.nav-dot');
 
-    function scrollToSection(index) {
-        sections[index].scrollIntoView({ behavior: 'smooth' });
-        updateDots(index);
-    }
+function scrollToSection(index) {
+    sections[index].scrollIntoView({ behavior: 'smooth' });
+    updateDots(index);
+}
 
-    function updateDots(index) {
-        dots.forEach((dot, i) => {
-            dot.classList.toggle('active', i === index);
-        });
-    }
-
-    // Scroll spy
-    window.addEventListener('scroll', () => {
-        let current = 0;
-        sections.forEach((section, index) => {
-            const sectionTop = section.offsetTop;
-            if (scrollY >= sectionTop - window.innerHeight / 2) {
-                current = index;
-            }
-        });
-        updateDots(current);
+function updateDots(index) {
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
     });
+}
 
-    // Keyboard
-    document.addEventListener('keydown', (e) => {
-        const current = Array.from(dots).findIndex(d => d.classList.contains('active'));
-        if (e.key === 'ArrowDown' && current < sections.length - 1) {
-            scrollToSection(current + 1);
-        } else if (e.key === 'ArrowUp' && current > 0) {
-            scrollToSection(current - 1);
+window.addEventListener('scroll', () => {
+    let current = 0;
+    sections.forEach((section, index) => {
+        const sectionTop = section.offsetTop;
+        if (scrollY >= sectionTop - window.innerHeight / 2) {
+            current = index;
         }
     });
+    updateDots(current);
+});
 
-    // MVP Glitch (оставить как было)
-    const progressBar = document.getElementById('progressBar');
-    const progressFill = document.getElementById('progressFill');
-    const glitchOverlay = document.getElementById('glitchOverlay');
-    const qrFinal = document.getElementById('qrFinal');
-    const finalText = document.getElementById('finalText');
+document.addEventListener('keydown', (e) => {
+    const current = Array.from(dots).findIndex(d => d.classList.contains('active'));
+    if (e.key === 'ArrowDown' && current < sections.length - 1) {
+        scrollToSection(current + 1);
+    } else if (e.key === 'ArrowUp' && current > 0) {
+        scrollToSection(current - 1);
+    }
+});
+
+// MVP Glitch Effect
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+const glitchCanvas = document.getElementById('glitchCanvas');
+const qrOverlay = document.getElementById('qrOverlay');
+const ctx = glitchCanvas.getContext('2d');
+
+let isAnimating = false;
+
+function resizeCanvas() {
+    glitchCanvas.width = window.innerWidth;
+    glitchCanvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function randomColor() {
+    return `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+}
+
+function drawGlitchFrame() {
+    ctx.fillStyle = randomColor();
+    ctx.fillRect(Math.random() * glitchCanvas.width, Math.random() * glitchCanvas.height, 
+                 Math.random() * 200, Math.random() * 50);
     
-    progressBar.addEventListener('click', () => {
-        // Start glitch
-        glitchOverlay.classList.add('active');
+    for (let i = 0; i < 20; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
+        ctx.fillRect(Math.random() * glitchCanvas.width, Math.random() * glitchCanvas.height, 
+                     Math.random() * 100, 2);
+    }
+}
+
+function startGlitch() {
+    if (isAnimating) return;
+    isAnimating = true;
+    
+    glitchCanvas.style.display = 'block';
+    progressBar.style.pointerEvents = 'none';
+    
+    let frame = 0;
+    const glitchInterval = setInterval(() => {
+        drawGlitchFrame();
+        frame++;
+        
+        // Progress bar fills rapidly
+        if (frame < 30) {
+            const progress = 68 + Math.floor((frame / 30) * 32);
+            progressFill.style.width = progress + '%';
+            progressFill.textContent = progress + '%';
+            progressLabel.textContent = 'Загрузка ' + progress + '%';
+        }
+        
+        // Screen shake effect
+        document.body.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
+        
+    }, 50);
+    
+    // Stop glitch and show QR
+    setTimeout(() => {
+        clearInterval(glitchInterval);
+        glitchCanvas.style.display = 'none';
+        document.body.style.transform = '';
+        
+        // Flash white
+        const flash = document.createElement('div');
+        flash.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1001; opacity: 1; transition: opacity 0.3s;';
+        document.body.appendChild(flash);
         
         setTimeout(() => {
-            // Fill to 100%
-            progressFill.style.width = '100%';
-            progressFill.textContent = '100%';
-            
-            setTimeout(() => {
-                // Show QR
-                glitchOverlay.classList.remove('active');
-                qrFinal.classList.add('active');
-                finalText.classList.add('visible');
-            }, 800);
-        }, 500);
-    });
+            flash.style.opacity = '0';
+            setTimeout(() => flash.remove(), 300);
+            qrOverlay.style.display = 'flex';
+        }, 100);
+        
+    }, 2000);
+}
+
+progressBar.addEventListener('click', startGlitch);
 </script>
 
 </body>
