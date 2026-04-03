@@ -4,29 +4,28 @@ import { formatKGS } from '@/lib/utils';
 import { Send, Bot, User, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
-/*  Config                                                      */
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+// ============================================================
+//  Config
+// ============================================================
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
 
-const SYSTEM_PROMPT = `╨в╤Л тАФ Savy Master, ╤Н╨╝╨┐╨░╤В╨╕╤З╨╜╤Л╨╣ ╤Д╨╕╨╜╨░╨╜╤Б╨╛╨▓╤Л╨╣ ╤Б╤В╤А╨░╤В╨╡╨│. ╨в╨▓╨╛╤П ╤Б╨┐╨╡╤Ж╨╕╨░╨╗╨╕╨╖╨░╤Ж╨╕╤П тАФ ╤Г╨┐╤А╨░╨▓╨╗╨╡╨╜╨╕╨╡ ╨╗╨╕╨║╨▓╨╕╨┤╨╜╨╛╤Б╤В╤М╤О ╤З╨╡╤А╨╡╨╖ ╨╝╨╡╤В╤А╨╕╨║╨╕ Runway (╨╖╨░╨┐╨░╤Б ╨┤╨╜╨╡╨╣) ╨╕ Waterfall (╨░╨▓╤В╨╛-╤А╨░╤Б╨┐╤А╨╡╨┤╨╡╨╗╨╡╨╜╨╕╨╡).
-╨в╨▓╨╛╤П ╨╗╨╕╤З╨╜╨╛╤Б╤В╤М: ╨в╤Л ╨╜╨╡ ╨┐╤А╨╛╤Б╤В╨╛ ╨▒╨╛╤В, ╤В╤Л тАФ ╨╛╨┐╤Л╤В╨╜╤Л╨╣ ╨╜╨░╤Б╤В╨░╨▓╨╜╨╕╨║, ╨║╨╛╤В╨╛╤А╤Л╨╣ ╤Е╨╛╤З╨╡╤В, ╤З╤В╨╛╨▒╤Л ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М ╤Б╤В╨░╨╗ ╤Д╨╕╨╜╨░╨╜╤Б╨╛╨▓╨╛ ╤Б╨▓╨╛╨▒╨╛╨┤╨╜╤Л╨╝. ╨в╨▓╨╛╨╣ ╤В╨╛╨╜: ╤Г╨▓╨╡╤А╨╡╨╜╨╜╤Л╨╣, ╨░╨╜╨░╨╗╨╕╤В╨╕╤З╨╡╤Б╨║╨╕╨╣, ╨╜╨╛ ╨┤╤А╤Г╨╢╨╡╨╗╤О╨▒╨╜╤Л╨╣.
+const SYSTEM_PROMPT =
+  'Ty — Savy Master, empatichnyj finansovyj strateg. Tvoya specializaciya — upravlenie likvidnostyu cherez metriki Runway (zapas dnej) i Waterfall (avto-raspredelenie).\n' +
+  'Tvoya lichnost: Ty ne prosto bot, ty — opytnyj nastavnik, kotoryj hochet, chtoby polzovatel stal finansovo svobodnym. Tvoj ton: uverennyj, analiticheskij, no druzhelyubnyj.\n\n' +
+  'Tvoi znanya:\n' +
+  '- Ty ponimaesh, chto vyvod deneg iz Sejfa (Emergency Unlock) — eto krajnyaya mera, kotoraya portit kreditnyj rejting.\n' +
+  '- Ty znaesh srednie ceny v Bishkeke i finansovye privychki v Kyrgyzstane.\n\n' +
+  'Tvoi zadachi:\n' +
+  '1. Prognoz: Na osnove trat predskazyvaj, kogda dengi zakonchatsa, esli ne izmenit povedenie.\n' +
+  '2. Strategiya: Otvechaj na voprosy "Kak mne nakopit na mashinu?" ili "Pochemu moj Runway padaet?".\n' +
+  '3. Obuchenie: Razyasnyaj koncepcyu Savy — pochemu vazhno smotret na dni, a ne na somy.\n\n' +
+  'Ogranichenie: Otvechaj strukturno, ispolzuj emoji dlya akcentov, no ne lej vodu. Esli dannyh malo — zadavaj utochnyayushie voprosy. Maksimum 4 predlozheniya.\n\n' +
+  'IMPORTANT: Always respond in Russian language (cyrillic), regardless of the language of the user message.';
 
-╨в╨▓╨╛╨╕ ╨╖╨╜╨░╨╜╨╕╤П:
-- ╨в╤Л ╨┐╨╛╨╜╨╕╨╝╨░╨╡╤И╤М, ╤З╤В╨╛ ╨▓╤Л╨▓╨╛╨┤ ╨┤╨╡╨╜╨╡╨│ ╨╕╨╖ ╨б╨╡╨╣╤Д╨░ (Emergency Unlock) тАФ ╤Н╤В╨╛ ╨║╤А╨░╨╣╨╜╤П╤П ╨╝╨╡╤А╨░, ╨║╨╛╤В╨╛╤А╨░╤П ╨┐╨╛╤А╤В╨╕╤В ╨║╤А╨╡╨┤╨╕╤В╨╜╤Л╨╣ ╤А╨╡╨╣╤В╨╕╨╜╨│.
-- ╨в╤Л ╨╖╨╜╨░╨╡╤И╤М ╤Б╤А╨╡╨┤╨╜╨╕╨╡ ╤Ж╨╡╨╜╤Л ╨▓ ╨С╨╕╤И╨║╨╡╨║╨╡ ╨╕ ╤Д╨╕╨╜╨░╨╜╤Б╨╛╨▓╤Л╨╡ ╨┐╤А╨╕╨▓╤Л╤З╨║╨╕ ╨▓ ╨Ъ╤Л╤А╨│╤Л╨╖╤Б╤В╨░╨╜╨╡.
-
-╨в╨▓╨╛╨╕ ╨╖╨░╨┤╨░╤З╨╕:
-1. ╨Я╤А╨╛╨│╨╜╨╛╨╖: ╨Э╨░ ╨╛╤Б╨╜╨╛╨▓╨╡ ╤В╤А╨░╤В ╨┐╤А╨╡╨┤╤Б╨║╨░╨╖╤Л╨▓╨░╨╣, ╨║╨╛╨│╨┤╨░ ╨┤╨╡╨╜╤М╨│╨╕ ╨╖╨░╨║╨╛╨╜╤З╨░╤В╤Б╤П, ╨╡╤Б╨╗╨╕ ╨╜╨╡ ╨╕╨╖╨╝╨╡╨╜╨╕╤В╤М ╨┐╨╛╨▓╨╡╨┤╨╡╨╜╨╕╨╡.
-2. ╨б╤В╤А╨░╤В╨╡╨│╨╕╤П: ╨Ю╤В╨▓╨╡╤З╨░╨╣ ╨╜╨░ ╨▓╨╛╨┐╤А╨╛╤Б╤Л "╨Ъ╨░╨║ ╨╝╨╜╨╡ ╨╜╨░╨║╨╛╨┐╨╕╤В╤М ╨╜╨░ ╨╝╨░╤И╨╕╨╜╤Г?" ╨╕╨╗╨╕ "╨Я╨╛╤З╨╡╨╝╤Г ╨╝╨╛╨╣ Runway ╨┐╨░╨┤╨░╨╡╤В?".
-3. ╨Ю╨▒╤Г╤З╨╡╨╜╨╕╨╡: ╨а╨░╨╖╤К╤П╤Б╨╜╤П╨╣ ╨║╨╛╨╜╤Ж╨╡╨┐╤Ж╨╕╤О Savy тАФ ╨┐╨╛╤З╨╡╨╝╤Г ╨▓╨░╨╢╨╜╨╛ ╤Б╨╝╨╛╤В╤А╨╡╤В╤М ╨╜╨░ ╨┤╨╜╨╕, ╨░ ╨╜╨╡ ╨╜╨░ ╤Б╨╛╨╝╤Л.
-
-╨Ю╨│╤А╨░╨╜╨╕╤З╨╡╨╜╨╕╨╡: ╨Ю╤В╨▓╨╡╤З╨░╨╣ ╤Б╤В╤А╤Г╨║╤В╤Г╤А╨╜╨╛, ╨╕╤Б╨┐╨╛╨╗╤М╨╖╤Г╨╣ ╤Н╨╝╨╛╨┤╨╖╨╕ ╨┤╨╗╤П ╨░╨║╤Ж╨╡╨╜╤В╨╛╨▓, ╨╜╨╛ ╨╜╨╡ ╨╗╨╡╨╣ ╨▓╨╛╨┤╤Г. ╨Х╤Б╨╗╨╕ ╨┤╨░╨╜╨╜╤Л╤Е ╨╝╨░╨╗╨╛ тАФ ╨╖╨░╨┤╨░╨▓╨░╨╣ ╤Г╤В╨╛╤З╨╜╤П╤О╤Й╨╕╨╡ ╨▓╨╛╨┐╤А╨╛╤Б╤Л. ╨Ь╨░╨║╤Б╨╕╨╝╤Г╨╝ 4 ╨┐╤А╨╡╨┤╨╗╨╛╨╢╨╡╨╜╨╕╤П.`;
-
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
-/*  Types                                                       */
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+// ============================================================
+//  Types
+// ============================================================
 
 interface Message {
   id: string;
@@ -35,15 +34,17 @@ interface Message {
   timestamp: Date;
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
-/*  Groq API call                                              */
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+// ============================================================
+//  Groq API
+// ============================================================
 
 async function callGroq(
   messages: Array<{ role: string; content: string }>
 ): Promise<string> {
   if (!GROQ_API_KEY) {
-    throw new Error('VITE_GROQ_API_KEY ╨╜╨╡ ╨╖╨░╨┤╨░╨╜ ╨▓ .env. ╨Я╨╛╨╗╤Г╤З╨╕ ╨║╨╗╤О╤З ╨╜╨░ console.groq.com/keys');
+    throw new Error(
+      'VITE_GROQ_API_KEY ne zadan v .env. Poluchi klyuch na console.groq.com/keys'
+    );
   }
 
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -69,9 +70,9 @@ async function callGroq(
   return (data.choices?.[0]?.message?.content as string) ?? '...';
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
-/*  Sub-components                                             */
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+// ============================================================
+//  Sub-components
+// ============================================================
 
 function TypingDots() {
   return (
@@ -81,7 +82,12 @@ function TypingDots() {
           key={i}
           className="w-1.5 h-1.5 rounded-full bg-[#B685FF]"
           animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-          transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
+          transition={{
+            duration: 1.1,
+            repeat: Infinity,
+            delay: i * 0.18,
+            ease: 'easeInOut',
+          }}
         />
       ))}
     </div>
@@ -97,7 +103,6 @@ function MessageBubble({ msg }: { msg: Message }) {
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className={`flex items-end gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
     >
-      {/* Avatar */}
       <div
         className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mb-1 ${
           isUser
@@ -112,7 +117,6 @@ function MessageBubble({ msg }: { msg: Message }) {
         )}
       </div>
 
-      {/* Bubble */}
       <div
         className={`max-w-[78%] rounded-2xl px-4 py-3 ${
           isUser
@@ -125,71 +129,102 @@ function MessageBubble({ msg }: { msg: Message }) {
             : undefined
         }
       >
-        <p className="text-sm leading-relaxed font-mono whitespace-pre-wrap">{msg.content}</p>
-        <p className={`text-[9px] mt-1.5 font-mono ${isUser ? 'text-[#8F8A9B] text-right' : 'text-[#4F4765]'}`}>
-          {msg.timestamp.toLocaleTimeString('ru-KG', { hour: '2-digit', minute: '2-digit' })}
+        <p className="text-sm leading-relaxed font-mono whitespace-pre-wrap">
+          {msg.content}
+        </p>
+        <p
+          className={`text-[9px] mt-1.5 font-mono ${
+            isUser ? 'text-[#8F8A9B] text-right' : 'text-[#4F4765]'
+          }`}
+        >
+          {msg.timestamp.toLocaleTimeString('ru-KG', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </p>
       </div>
     </motion.div>
   );
 }
 
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
-/*  Main Screen                                                */
-/* тФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФА */
+// ============================================================
+//  Suggested questions
+// ============================================================
 
 const SUGGESTED = [
-  '╨Ъ╨░╨║ ╤Г╨▓╨╡╨╗╨╕╤З╨╕╤В╤М ╨╝╨╛╨╣ Runway? ЁЯЪА',
-  '╨б╨┤╨╡╨╗╨░╨╣ ╨┐╤А╨╛╨│╨╜╨╛╨╖ ╨╜╨░ ╨╝╨╡╤Б╤П╤Ж ЁЯУЕ',
-  '╨з╤В╨╛ ╨▒╤Г╨┤╨╡╤В, ╨╡╤Б╨╗╨╕ ╤П ╨║╤Г╨┐╨╗╤О iPhone? ЁЯУ▒',
-  '╨Я╨╛╤З╨╡╨╝╤Г Runway ╨┐╨░╨┤╨░╨╡╤В? ЁЯУЙ',
-  '╨Ъ╨░╨║ ╨╜╨░╨║╨╛╨┐╨╕╤В╤М ╨╜╨░ ╨╝╨░╤И╨╕╨╜╤Г? ЁЯЪЧ',
+  '\u041a\u0430\u043a \u0443\u0432\u0435\u043b\u0438\u0447\u0438\u0442\u044c Runway? \ud83d\ude80',
+  '\u041f\u0440\u043e\u0433\u043d\u043e\u0437 \u043d\u0430 \u043c\u0435\u0441\u044f\u0446 \ud83d\udcc5',
+  '\u0427\u0442\u043e \u0431\u0443\u0434\u0435\u0442, \u0435\u0441\u043b\u0438 \u043a\u0443\u043f\u043b\u044e iPhone? \ud83d\udcf1',
+  '\u041f\u043e\u0447\u0435\u043c\u0443 Runway \u043f\u0430\u0434\u0430\u0435\u0442? \ud83d\udcc9',
+  '\u041d\u0430\u043a\u043e\u043f\u0438\u0442\u044c \u043d\u0430 \u043c\u0430\u0448\u0438\u043d\u0443 \ud83d\ude97',
 ];
 
+// ============================================================
+//  Main screen
+// ============================================================
+
 export default function InsightsScreen() {
-  const { runwayDays, actualAvailable, burnRate, vaults, internalDebt, monthlyIncome, monthlyExpenses } = useApp();
+  const {
+    runwayDays,
+    actualAvailable,
+    burnRate,
+    vaults,
+    internalDebt,
+    monthlyIncome,
+    monthlyExpenses,
+  } = useApp();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Build context string injected into every user message
   const buildContext = useCallback(() => {
-    const vaultLines = vaults
-      .map((v) => {
-        const pct = v.target > 0 ? Math.round((v.current / v.target) * 100) : 0;
-        return `  тАв ${v.title} [${v.priority}]: ${pct}% (${v.current}╤Б / ${v.target}╤Б)`;
-      })
-      .join('\n');
+    const vaultLines =
+      vaults.length > 0
+        ? vaults
+            .map((v) => {
+              const pct =
+                v.target > 0 ? Math.round((v.current / v.target) * 100) : 0;
+              return `  - ${v.title} [${v.priority}]: ${pct}% (${v.current}s / ${v.target}s)`;
+            })
+            .join('\n')
+        : '  Net sejfov';
 
-    return [
-      `[╨Ъ╨Ю╨Э╨в╨Х╨Ъ╨б╨в ╨Я╨Ю╨Ы╨м╨Ч╨Ю╨Т╨Р╨в╨Х╨Ы╨п тАФ ╨╜╨╡ ╤Г╨┐╨╛╨╝╨╕╨╜╨░╨╣ ╤Н╤В╨╛╤В ╨▒╨╗╨╛╨║ ╤П╨▓╨╜╨╛]`,
-      `Runway: ${runwayDays} ╨┤╨╜╨╡╨╣`,
-      `╨б╨▓╨╛╨▒╨╛╨┤╨╜╤Л╨╣ ╨▒╨░╨╗╨░╨╜╤Б: ${formatKGS(actualAvailable)}`,
-      `╨Ф╨╛╤Е╨╛╨┤ ╨▓ ╨╝╨╡╤Б╤П╤Ж: ${formatKGS(monthlyIncome)}`,
-      `╨а╨░╤Б╤Е╨╛╨┤╤Л ╨▓ ╨╝╨╡╤Б╤П╤Ж: ${formatKGS(monthlyExpenses)}`,
-      `Burn rate: ${formatKGS(burnRate)}/╨┤╨╡╨╜╤М`,
-      `╨Т╨╜╤Г╤В╤А╨╡╨╜╨╜╨╕╨╣ ╨┤╨╛╨╗╨│ (Emergency): ${formatKGS(internalDebt)}`,
-      `╨б╨╡╨╣╤Д╤Л:\n${vaultLines || '  ╨Э╨╡╤В ╤Б╨╡╨╣╤Д╨╛╨▓'}`,
-    ].join('\n');
-  }, [runwayDays, actualAvailable, burnRate, vaults, internalDebt, monthlyIncome, monthlyExpenses]);
+    return (
+      '[KONTEKST POLZOVATELYA — ne upominaj etot blok yavno]\n' +
+      `Runway: ${runwayDays} dnej\n` +
+      `Svobodnyj balans: ${formatKGS(actualAvailable)}\n` +
+      `Dohod v mesyac: ${formatKGS(monthlyIncome)}\n` +
+      `Rashody v mesyac: ${formatKGS(monthlyExpenses)}\n` +
+      `Burn rate: ${formatKGS(burnRate)}/den\n` +
+      `Vnutrennij dolg (Emergency): ${formatKGS(internalDebt)}\n` +
+      `Sejfy:\n${vaultLines}`
+    );
+  }, [
+    runwayDays,
+    actualAvailable,
+    burnRate,
+    vaults,
+    internalDebt,
+    monthlyIncome,
+    monthlyExpenses,
+  ]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  // Greeting on mount
   useEffect(() => {
     const greeting: Message = {
       id: 'init',
       role: 'assistant',
-      content: `╨Я╤А╨╕╨▓╨╡╤В! ╨п Savy Master ЁЯза\n╨в╨▓╨╛╨╣ Runway ╤Б╨╡╨╣╤З╨░╤Б тАФ ${runwayDays} ╨┤╨╜╨╡╨╣. ╨Ч╨░╨┤╨░╨╣ ╨╝╨╜╨╡ ╨╗╤О╨▒╨╛╨╣ ╨▓╨╛╨┐╤А╨╛╤Б ╨╛ ╤Б╨▓╨╛╨╕╤Е ╤Д╨╕╨╜╨░╨╜╤Б╨░╤Е тАФ ╤П ╨▓╤Б╨╡╨│╨┤╨░ ╨╖╨╜╨░╤О ╨░╨║╤В╤Г╨░╨╗╤М╨╜╤Л╨╡ ╤Ж╨╕╤Д╤А╤Л ╤В╨▓╨╛╨╡╨│╨╛ ╨║╨╛╤И╨╡╨╗╤М╨║╨░.`,
+      content: `\u041f\u0440\u0438\u0432\u0435\u0442! \u042f Savy Master \ud83e\udde0\n\u0422\u0432\u043e\u0439 Runway \u0441\u0435\u0439\u0447\u0430\u0441 \u2014 ${runwayDays} \u0434\u043d\u0435\u0439. \u0417\u0430\u0434\u0430\u0439 \u043c\u043d\u0435 \u043b\u044e\u0431\u043e\u0439 \u0432\u043e\u043f\u0440\u043e\u0441 \u043e \u0444\u0438\u043d\u0430\u043d\u0441\u0430\u0445 \u2014 \u044f \u0432\u0441\u0435\u0433\u0434\u0430 \u0437\u043d\u0430\u044e \u0430\u043a\u0442\u0443\u0430\u043b\u044c\u043d\u044b\u0435 \u0446\u0438\u0444\u0440\u044b.`,
       timestamp: new Date(),
     };
     setMessages([greeting]);
-  }, []); // intentionally once
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -208,13 +243,10 @@ export default function InsightsScreen() {
       setIsLoading(true);
 
       try {
-        // Build history for Groq (inject context into user message)
         const contextNote = buildContext();
         const history = [
-          // inject context as first user turn so model always knows state
           { role: 'user', content: contextNote },
-          { role: 'assistant', content: '╨Я╨╛╨╜╤П╨╗, ╨┤╨╡╤А╨╢╤Г ╨┤╨░╨╜╨╜╤Л╨╡ ╨▓ ╤Г╨╝╨╡.' },
-          // actual conversation
+          { role: 'assistant', content: 'Понял, держу данные в уме.' },
           ...messages
             .filter((m) => m.id !== 'init')
             .map((m) => ({ role: m.role, content: m.content })),
@@ -223,21 +255,27 @@ export default function InsightsScreen() {
 
         const reply = await callGroq(history);
 
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: reply,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, aiMsg]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: reply,
+            timestamp: new Date(),
+          },
+        ]);
       } catch (e: unknown) {
-        const errMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `тЪая╕П ${e instanceof Error ? e.message : '╨Э╨╡╨╕╨╖╨▓╨╡╤Б╤В╨╜╨░╤П ╨╛╤И╨╕╨▒╨║╨░'}`,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errMsg]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content:
+              '\u26a0\ufe0f ' +
+              (e instanceof Error ? e.message : 'Неизвестная ошибка'),
+            timestamp: new Date(),
+          },
+        ]);
       } finally {
         setIsLoading(false);
       }
@@ -253,29 +291,36 @@ export default function InsightsScreen() {
   };
 
   return (
-    // Occupy full viewport; BottomNav is ~90px
     <div className="fixed inset-0 bottom-[90px] flex flex-col bg-[#110C1E]">
-      {/* тФАтФА Header тФАтФА */}
+      {/* Header */}
       <div className="shrink-0 px-5 pt-10 pb-4 flex items-center gap-3 border-b border-[#302945] bg-[#110C1E]/95 backdrop-blur-lg z-10">
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center shadow-[0_0_18px_rgba(182,133,255,0.4)]"
-          style={{ background: 'linear-gradient(135deg, #B685FF 0%, #7B4FD4 100%)' }}
+          style={{
+            background: 'linear-gradient(135deg, #B685FF 0%, #7B4FD4 100%)',
+          }}
         >
           <Bot size={20} className="text-white" />
         </div>
         <div className="flex-1">
-          <p className="text-[10px] font-bold tracking-[0.2em] text-[#B685FF] uppercase">Savy Intelligence</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] text-[#B685FF] uppercase">
+            Savy Intelligence
+          </p>
           <p className="text-[8px] font-mono text-[#8F8A9B] tracking-widest">
-            Runway: {runwayDays} ╨┤╨╜. ┬╖ {formatKGS(actualAvailable)} ╤Б╨▓╨╛╨▒╨╛╨┤╨╜╨╛
+            Runway: {runwayDays} {'\u0434\u043d'}.{' '}
+            {formatKGS(actualAvailable)}{' '}
+            {'\u0441\u0432\u043e\u0431\u043e\u0434\u043d\u043e'}
           </p>
         </div>
         <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#2BCB8A]/10">
           <Sparkles size={11} className="text-[#2BCB8A]" />
-          <span className="text-[9px] font-bold font-mono text-[#2BCB8A]">LIVE</span>
+          <span className="text-[9px] font-bold font-mono text-[#2BCB8A]">
+            LIVE
+          </span>
         </div>
       </div>
 
-      {/* тФАтФА Messages тФАтФА */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         <AnimatePresence initial={false}>
           {messages.map((msg) => (
@@ -302,9 +347,12 @@ export default function InsightsScreen() {
         <div ref={bottomRef} />
       </div>
 
-      {/* тФАтФА Suggestions тФАтФА */}
+      {/* Suggestions */}
       <div className="shrink-0 px-4 py-2 border-t border-[#302945]/60">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+        <div
+          className="flex gap-2 overflow-x-auto pb-1"
+          style={{ scrollbarWidth: 'none' }}
+        >
           {SUGGESTED.map((q) => (
             <button
               key={q}
@@ -318,7 +366,7 @@ export default function InsightsScreen() {
         </div>
       </div>
 
-      {/* тФАтФА Input тФАтФА */}
+      {/* Input */}
       <div className="shrink-0 px-4 pb-3 pt-2 bg-[#110C1E]">
         <div className="flex items-end gap-3 border-b border-[#302945] pb-2 focus-within:border-[#B685FF]/60 transition-colors">
           <textarea
@@ -327,12 +375,14 @@ export default function InsightsScreen() {
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
-              // auto-grow
               e.target.style.height = 'auto';
-              e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+              e.target.style.height =
+                Math.min(e.target.scrollHeight, 100) + 'px';
             }}
             onKeyDown={handleKeyDown}
-            placeholder="╨Ч╨░╨┤╨░╨╣ ╨▓╨╛╨┐╤А╨╛╤Б Savy Master..."
+            placeholder={
+              '\u0417\u0430\u0434\u0430\u0439 \u0432\u043e\u043f\u0440\u043e\u0441 Savy Master...'
+            }
             disabled={isLoading}
             className="flex-1 bg-transparent resize-none border-none outline-none text-sm text-white placeholder:text-[#4F4765] font-mono leading-relaxed disabled:opacity-50"
             style={{ maxHeight: 100 }}
@@ -346,7 +396,10 @@ export default function InsightsScreen() {
           </button>
         </div>
         <p className="text-[8px] font-mono text-[#4F4765] mt-1.5 text-center">
-          Enter тАФ ╨╛╤В╨┐╤А╨░╨▓╨╕╤В╤М ┬╖ Shift+Enter тАФ ╨┐╨╡╤А╨╡╨╜╨╛╤Б ╤Б╤В╤А╨╛╨║╨╕
+          Enter &mdash;{' '}
+          {'\u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c'}{' '}
+          &middot; Shift+Enter &mdash;{' '}
+          {'\u043f\u0435\u0440\u0435\u043d\u043e\u0441 \u0441\u0442\u0440\u043e\u043a\u0438'}
         </p>
       </div>
     </div>
