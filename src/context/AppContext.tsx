@@ -11,18 +11,29 @@ export interface Vault {
   hasWarning?: boolean;
 }
 
+export interface FutureSpend {
+  id: string;
+  title: string;
+  amount: number;
+  date: string;
+  type: 'Fixed' | 'Flexible';
+  enabled: boolean;
+}
+
 interface AppState {
   monthlyIncome: number;
-  monthlyExpenses: number;
   actualAvailable: number;
   vaults: Vault[];
   isSetupComplete: boolean;
   isWaterfallActive: boolean;
   emergencyUnlockCount: number;
   internalDebt: number;
+  plannedSpends: FutureSpend[];
+  isSplashSeen: boolean;
 }
 
 interface AppContextType extends AppState {
+  monthlyExpenses: number;
   runwayDays: number;
   creditLimit: number;
   burnRate: number;
@@ -30,39 +41,50 @@ interface AppContextType extends AppState {
   addIncome: (amount: number) => void;
   emergencyUnlock: (vaultId: string, amount: number) => void;
   addVault: (vault: Omit<Vault, 'id' | 'current'>) => void;
+  updateVault: (id: string, updates: Partial<Vault>) => void;
+  deleteVault: (id: string) => void;
   setIsWaterfallActive: (active: boolean) => void;
   releaseFunds: (vaultId: string) => number;
   accelerateGoal: (vaultId: string, amount: number) => boolean;
+  addFutureSpend: (spend: Omit<FutureSpend, 'id' | 'enabled'>) => void;
+  toggleFutureSpend: (id: string) => void;
+  deleteFutureSpend: (id: string) => void;
+  setSplashSeen: (status: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const VAULT_PRESETS: Record<string, { sub: string; priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'; icon: string; percent: number }> = {
-  'Rent': { sub: 'MONTHLY FIXED', priority: 'CRITICAL', icon: 'Home', percent: 0.3 },
-  'Groceries': { sub: 'DAILY ESSENTIALS', priority: 'CRITICAL', icon: 'ShoppingBag', percent: 0.25 },
-  'Credit': { sub: 'DEBT REPAYMENT', priority: 'HIGH', icon: 'CreditCard', percent: 0.15 },
-  'Savings': { sub: 'SAFETY NET', priority: 'MEDIUM', icon: 'Shield', percent: 0.2 },
-  'Toy/Holidays': { sub: 'SOCIAL EVENTS', priority: 'LOW', icon: 'Gift', percent: 0.1 },
+const VAULT_PRESETS: Record<string, { title: string; sub: string; priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'; icon: string; percent: number }> = {
+  'Rent': { title: 'Аренда', sub: 'ЕЖЕМЕСЯЧНЫЙ ПЛАТЕЖ', priority: 'CRITICAL', icon: 'Home', percent: 0.3 },
+  'Groceries': { title: 'Продукты', sub: 'ПРОДУКТЫ И БЫТ', priority: 'CRITICAL', icon: 'ShoppingBag', percent: 0.25 },
+  'Credit': { title: 'Кредит', sub: 'ПОГАШЕНИЕ ДОЛГА', priority: 'HIGH', icon: 'CreditCard', percent: 0.15 },
+  'Savings': { title: 'Накопления', sub: 'ПОДУШКА БЕЗОПАСНОСТИ', priority: 'MEDIUM', icon: 'Shield', percent: 0.2 },
+  'Toy/Holidays': { title: 'Той/Праздники', sub: 'МЕРОПРИЯТИЯ И ПОДАРКИ', priority: 'LOW', icon: 'Gift', percent: 0.1 },
 };
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>({
     monthlyIncome: 40000,
-    monthlyExpenses: 35000,
     actualAvailable: 5000,
     vaults: [],
     isSetupComplete: false,
     isWaterfallActive: false,
     emergencyUnlockCount: 0,
     internalDebt: 0,
+    plannedSpends: [],
+    isSplashSeen: false,
   });
 
-  const burnRate = useMemo(() => state.monthlyExpenses / 30, [state.monthlyExpenses]);
+  const monthlyExpenses = useMemo(() => state.vaults.reduce((sum, v) => sum + v.target, 0), [state.vaults]);
+  const burnRate = useMemo(() => monthlyExpenses / 30, [monthlyExpenses]);
   
   const runwayDays = useMemo(() => {
     if (burnRate === 0) return 365;
-    return Math.floor(state.actualAvailable / burnRate);
-  }, [state.actualAvailable, burnRate]);
+    const reserved = state.plannedSpends
+      .filter(s => s.type === 'Fixed' && s.enabled)
+      .reduce((sum, s) => sum + s.amount, 0);
+    return Math.floor(Math.max(0, state.actualAvailable - reserved) / burnRate);
+  }, [state.actualAvailable, burnRate, state.plannedSpends]);
 
   const creditLimit = useMemo(() => {
     let base = state.monthlyIncome * 2;
@@ -85,7 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       return {
         id: Math.random().toString(36).substr(2, 9),
-        title: key,
+        title: preset.title,
         sub: preset.sub,
         current: normalizedTarget, // Start filled at 100%
         target: normalizedTarget,
@@ -97,7 +119,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState(prev => ({
       ...prev,
       monthlyIncome: income,
-      monthlyExpenses: expenses,
       vaults: initialVaults,
       isSetupComplete: true,
       isWaterfallActive: true, // Trigger waterfall animation
@@ -165,6 +186,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updateVault = (id: string, updates: Partial<Vault>) => {
+    setState(prev => ({
+      ...prev,
+      vaults: prev.vaults.map(v => v.id === id ? { ...v, ...updates } : v),
+    }));
+  };
+
+  const deleteVault = (id: string) => {
+    setState(prev => {
+      const vault = prev.vaults.find(v => v.id === id);
+      if (!vault) return prev;
+      return {
+        ...prev,
+        actualAvailable: prev.actualAvailable + vault.current,
+        vaults: prev.vaults.filter(v => v.id !== id),
+      };
+    });
+  };
+
   const setIsWaterfallActive = (active: boolean) => {
     setState(prev => ({ ...prev, isWaterfallActive: active }));
   };
@@ -210,9 +250,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return success;
   };
 
+  const addFutureSpend = (spend: Omit<FutureSpend, 'id' | 'enabled'>) => {
+    setState(prev => ({
+      ...prev,
+      plannedSpends: [...prev.plannedSpends, { ...spend, id: Math.random().toString(36).substr(2, 9), enabled: true }],
+    }));
+  };
+
+  const toggleFutureSpend = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      plannedSpends: prev.plannedSpends.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s)
+    }));
+  };
+
+  const deleteFutureSpend = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      plannedSpends: prev.plannedSpends.filter(s => s.id !== id)
+    }));
+  };
+
+  const setSplashSeen = (status: boolean) => {
+    setState(prev => ({ ...prev, isSplashSeen: status }));
+  };
+
   return (
     <AppContext.Provider value={{ 
       ...state, 
+      monthlyExpenses,
       runwayDays, 
       creditLimit, 
       burnRate,
@@ -220,9 +286,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addIncome, 
       emergencyUnlock, 
       addVault, 
+      updateVault,
+      deleteVault,
       setIsWaterfallActive,
       releaseFunds,
       accelerateGoal,
+      addFutureSpend,
+      toggleFutureSpend,
+      deleteFutureSpend,
+      setSplashSeen,
     }}>
       {children}
     </AppContext.Provider>

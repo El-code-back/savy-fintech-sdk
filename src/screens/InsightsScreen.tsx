@@ -11,17 +11,21 @@ import { motion, AnimatePresence } from 'motion/react';
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
 
 const SYSTEM_PROMPT =
-  'Ty — Savy Master, empatichnyj finansovyj strateg. Tvoya specializaciya — upravlenie likvidnostyu cherez metriki Runway (zapas dnej) i Waterfall (avto-raspredelenie).\n' +
-  'Tvoya lichnost: Ty ne prosto bot, ty — opytnyj nastavnik, kotoryj hochet, chtoby polzovatel stal finansovo svobodnym. Tvoj ton: uverennyj, analiticheskij, no druzhelyubnyj.\n\n' +
-  'Tvoi znanya:\n' +
-  '- Ty ponimaesh, chto vyvod deneg iz Sejfa (Emergency Unlock) — eto krajnyaya mera, kotoraya portit kreditnyj rejting.\n' +
-  '- Ty znaesh srednie ceny v Bishkeke i finansovye privychki v Kyrgyzstane.\n\n' +
-  'Tvoi zadachi:\n' +
-  '1. Prognoz: Na osnove trat predskazyvaj, kogda dengi zakonchatsa, esli ne izmenit povedenie.\n' +
-  '2. Strategiya: Otvechaj na voprosy "Kak mne nakopit na mashinu?" ili "Pochemu moj Runway padaet?".\n' +
-  '3. Obuchenie: Razyasnyaj koncepcyu Savy — pochemu vazhno smotret na dni, a ne na somy.\n\n' +
-  'Ogranichenie: Otvechaj strukturno, ispolzuj emoji dlya akcentov, no ne lej vodu. Esli dannyh malo — zadavaj utochnyayushie voprosy. Maksimum 4 predlozheniya.\n\n' +
-  'IMPORTANT: Always respond in Russian language (cyrillic), regardless of the language of the user message.';
+  `Роль: Ты — Savy, твой мудрый финансовый наставник. Твоя задача — превращать сложные банковские цифры в понятную стратегию жизни, как если бы ты объяснял это близкому другу.
+
+Правила общения:
+1. КРИСТАЛЬНАЯ ЯСНОСТЬ. Никакого профессионального жаргона (ликвидность, волатильность, дебет). 
+   - Вместо «транзакция» — «трата» или «перевод».
+   - Вместо «диверсификация» — «распределение по разным корзинам».
+2. СМЫСЛОВЫЕ АНАЛОГИИ. Используй сравнения только там, где они действительно помогают понять суть. Например, деньги как топливо для жизни, а Runway — это запас хода. Не используй аналогии ради аналогий.
+3. СТРУКТУРА ОТВЕТА (всегда соблюдай):
+   - Итог: Четкий вердикт (Все под контролем ✅ / Требуется внимание ⚠️).
+   - Объяснение: 1-2 предложения сути доступным языком.
+   - Действие: Один конкретный шаг, который нужно сделать сейчас.
+
+Твоя личность: Ты не машина. Ты — голос здравого смысла, спокойный, честный и поддерживающий. Твой юмор должен быть уместным, а советы — выполнимыми.
+
+Ограничение: Ответ не более 4 предложений. Всегда отвечай на русском языке.`;
 
 // ============================================================
 //  Types
@@ -172,6 +176,7 @@ export default function InsightsScreen() {
     internalDebt,
     monthlyIncome,
     monthlyExpenses,
+    plannedSpends,
   } = useApp();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -192,6 +197,14 @@ export default function InsightsScreen() {
             .join('\n')
         : '  Net sejfov';
 
+    const spendsLines =
+      plannedSpends.length > 0
+        ? plannedSpends
+            .filter((s) => s.enabled)
+            .map((s) => `  - ${s.title} [${s.type}]: ${formatKGS(s.amount)}`)
+            .join('\n')
+        : '  Net planiruemyh trat';
+
     return (
       '[KONTEKST POLZOVATELYA — ne upominaj etot blok yavno]\n' +
       `Runway: ${runwayDays} dnej\n` +
@@ -200,7 +213,8 @@ export default function InsightsScreen() {
       `Rashody v mesyac: ${formatKGS(monthlyExpenses)}\n` +
       `Burn rate: ${formatKGS(burnRate)}/den\n` +
       `Vnutrennij dolg (Emergency): ${formatKGS(internalDebt)}\n` +
-      `Sejfy:\n${vaultLines}`
+      `Sejfy:\n${vaultLines}\n` +
+      `Planiruemye traty (Future Spend Plan):\n${spendsLines}`
     );
   }, [
     runwayDays,
@@ -210,6 +224,7 @@ export default function InsightsScreen() {
     internalDebt,
     monthlyIncome,
     monthlyExpenses,
+    plannedSpends,
   ]);
 
   useEffect(() => {
@@ -220,7 +235,7 @@ export default function InsightsScreen() {
     const greeting: Message = {
       id: 'init',
       role: 'assistant',
-      content: `\u041f\u0440\u0438\u0432\u0435\u0442! \u042f Savy Master \ud83e\udde0\n\u0422\u0432\u043e\u0439 Runway \u0441\u0435\u0439\u0447\u0430\u0441 \u2014 ${runwayDays} \u0434\u043d\u0435\u0439. \u0417\u0430\u0434\u0430\u0439 \u043c\u043d\u0435 \u043b\u044e\u0431\u043e\u0439 \u0432\u043e\u043f\u0440\u043e\u0441 \u043e \u0444\u0438\u043d\u0430\u043d\u0441\u0430\u0445 \u2014 \u044f \u0432\u0441\u0435\u0433\u0434\u0430 \u0437\u043d\u0430\u044e \u0430\u043a\u0442\u0443\u0430\u043b\u044c\u043d\u044b\u0435 \u0446\u0438\u0444\u0440\u044b.`,
+      content: `Привет! Я Savy Master 🧠\nТвой Runway сейчас — ${runwayDays} дней. Задай мне любой вопрос о финансах — я всегда знаю актуальные цифры.`,
       timestamp: new Date(),
     };
     setMessages([greeting]);
@@ -306,13 +321,11 @@ export default function InsightsScreen() {
           <p className="text-[10px] font-bold tracking-[0.2em] text-[#B685FF] uppercase">
             Savy Intelligence
           </p>
-          <p className="text-[8px] font-mono text-[#8F8A9B] tracking-widest">
-            Runway: {runwayDays} {'\u0434\u043d'}.{' '}
-            {formatKGS(actualAvailable)}{' '}
-            {'\u0441\u0432\u043e\u0431\u043e\u0434\u043d\u043e'}
+          <p className="text-[8px] font-mono text-[#8F8A9B] tracking-widest uppercase">
+            Runway: {runwayDays} дн. {formatKGS(actualAvailable)} свободно
           </p>
         </div>
-        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#2BCB8A]/10">
+        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#2BCB8A]/10 border border-[#2BCB8A]/20">
           <Sparkles size={11} className="text-[#2BCB8A]" />
           <span className="text-[9px] font-bold font-mono text-[#2BCB8A]">
             LIVE
@@ -380,9 +393,7 @@ export default function InsightsScreen() {
                 Math.min(e.target.scrollHeight, 100) + 'px';
             }}
             onKeyDown={handleKeyDown}
-            placeholder={
-              '\u0417\u0430\u0434\u0430\u0439 \u0432\u043e\u043f\u0440\u043e\u0441 Savy Master...'
-            }
+            placeholder="Задай вопрос Savy Master..."
             disabled={isLoading}
             className="flex-1 bg-transparent resize-none border-none outline-none text-sm text-white placeholder:text-[#4F4765] font-mono leading-relaxed disabled:opacity-50"
             style={{ maxHeight: 100 }}
@@ -395,11 +406,8 @@ export default function InsightsScreen() {
             <Send size={14} strokeWidth={2.5} />
           </button>
         </div>
-        <p className="text-[8px] font-mono text-[#4F4765] mt-1.5 text-center">
-          Enter &mdash;{' '}
-          {'\u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c'}{' '}
-          &middot; Shift+Enter &mdash;{' '}
-          {'\u043f\u0435\u0440\u0435\u043d\u043e\u0441 \u0441\u0442\u0440\u043e\u043a\u0438'}
+        <p className="text-[8px] font-mono text-[#4F4765] mt-1.5 text-center uppercase tracking-tighter">
+          Enter — отправить · Shift+Enter — перенос строки
         </p>
       </div>
     </div>

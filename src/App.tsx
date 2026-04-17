@@ -9,12 +9,17 @@ import CreditsScreen from './screens/CreditsScreen';
 import InsightsScreen from './screens/InsightsScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
+import OnboardingSplash from './screens/OnboardingSplash';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from './context/AppContext';
 
 export default function App() {
   const location = useLocation();
-  const { isSetupComplete } = useApp();
+  const { isSplashSeen, isSetupComplete } = useApp();
+
+  if (!isSplashSeen) {
+    return <OnboardingSplash />;
+  }
 
   if (!isSetupComplete) {
     return <OnboardingScreen />;

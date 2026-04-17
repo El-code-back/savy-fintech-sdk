@@ -5,11 +5,11 @@ import { cn } from '@/lib/utils';
 
 export const BottomNav = () => {
   const navItems = [
-    { icon: Home, label: 'HOME', path: '/' },
-    { icon: Shield, label: 'SAFES', path: '/vaults' },
-    { icon: CreditCard, label: 'CREDITS', path: '/credits' },
-    { icon: BarChart2, label: 'INSIGHTS', path: '/insights' },
-    { icon: User, label: 'PROFILE', path: '/profile' },
+    { icon: Home, label: 'ГЛАВНАЯ', path: '/' },
+    { icon: Shield, label: 'СЕЙФЫ', path: '/vaults' },
+    { icon: CreditCard, label: 'КРЕДИТЫ', path: '/credits' },
+    { icon: BarChart2, label: 'SAVY MI', path: '/insights' },
+    { icon: User, label: 'ПРОФИЛЬ', path: '/profile' },
   ];
 
   return (

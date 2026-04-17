@@ -3,7 +3,7 @@ import { useApp, Vault } from '@/context/AppContext';
 import { formatKGS, cn } from '@/lib/utils';
 import { GlassCard, ActionButton, PriorityBadge } from '@/components/shared/UI';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, X, Home, ShoppingBag, CreditCard, Shield, Gift, Car, Plane, CheckCircle, Zap } from 'lucide-react';
+import { Plus, X, Home, ShoppingBag, CreditCard, Shield, Gift, Car, Plane, CheckCircle, Zap, Settings2, Trash2 } from 'lucide-react';
 
 const ICON_MAP: Record<string, any> = {
   Home, ShoppingBag, CreditCard, Shield, Gift, Car, Plane
@@ -12,11 +12,24 @@ const ICON_MAP: Record<string, any> = {
 const ACCELERATE_PRESETS = [500, 1000, 5000];
 
 export default function VaultsScreen() {
-  const { vaults, runwayDays, actualAvailable, burnRate, addVault, releaseFunds, accelerateGoal } = useApp();
+  const { 
+    vaults, 
+    runwayDays, 
+    actualAvailable, 
+    burnRate, 
+    addVault, 
+    updateVault,
+    deleteVault,
+    releaseFunds, 
+    accelerateGoal 
+  } = useApp();
 
   const [showAddModal, setShowAddModal]           = useState(false);
   const [accelerateVaultId, setAccelerateVaultId] = useState<string | null>(null);
+  const [editVaultId, setEditVaultId]             = useState<string | null>(null);
   const [customAmount, setCustomAmount]           = useState('');
+  const [editTarget, setEditTarget]               = useState('');
+  const [deletingVaultId, setDeletingVaultId]     = useState<string | null>(null);
   const [toast, setToast]                         = useState<string | null>(null);
 
   const [newVault, setNewVault] = useState({
@@ -81,7 +94,7 @@ export default function VaultsScreen() {
       <header className="mb-10">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2 flex-1">
-            <p className="text-[10px] font-bold tracking-[0.2em] text-[#8F8A9B] uppercase">Vault Overview</p>
+            <p className="text-[10px] font-bold tracking-[0.2em] text-[#8F8A9B] uppercase">Обзор сейфов</p>
             <div className="h-px flex-1 bg-[#302945]" />
           </div>
           <button
@@ -91,13 +104,13 @@ export default function VaultsScreen() {
             <Plus size={20} />
           </button>
         </div>
-        <h1 className="text-4xl font-black text-white leading-tight mb-2">
-          Total in Vaults:<br />
+        <h1 className="text-4xl font-black text-white leading-tight mb-2 uppercase italic">
+          Всего в сейфах:<br />
           {formatKGS(vaultsTotal)}
         </h1>
         <div className="flex justify-between items-center">
           <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] uppercase">
-            {vaults.length} Active Goals Tracking in Real-Time
+            {vaults.length} Активных целей отслеживаются в реальном времени
           </p>
           {useApp().internalDebt > 0 && (
             <motion.div
@@ -106,7 +119,7 @@ export default function VaultsScreen() {
               className="bg-[#E84855]/10 px-2 py-1 rounded border border-[#E84855]/30"
             >
               <p className="text-[8px] font-black text-[#E84855] uppercase tracking-widest">
-                Internal Debt: {formatKGS(useApp().internalDebt)}
+                Внутренний долг: {formatKGS(useApp().internalDebt)}
               </p>
             </motion.div>
           )}
@@ -146,18 +159,55 @@ export default function VaultsScreen() {
                     <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mt-1 uppercase">{vault.sub}</p>
                   </div>
                 </div>
-                <PriorityBadge level={vault.priority} />
+                <div className="flex flex-col items-end gap-2">
+                  <PriorityBadge level={vault.priority} />
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => {
+                        setEditVaultId(vault.id);
+                        setEditTarget(vault.target.toString());
+                      }}
+                      className="p-1.5 rounded-lg bg-[#302945]/50 text-[#8F8A9B] hover:text-[#B685FF] transition-all"
+                    >
+                      <Settings2 size={14} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (deletingVaultId === vault.id) {
+                          deleteVault(vault.id);
+                          showToast(`Сейф "${vault.title}" удален`);
+                          setDeletingVaultId(null);
+                        } else {
+                          setDeletingVaultId(vault.id);
+                          // Auto reset after 3 seconds
+                          setTimeout(() => setDeletingVaultId(null), 3000);
+                        }
+                      }}
+                      className={cn(
+                        "p-1.5 rounded-lg transition-all flex items-center gap-1",
+                        deletingVaultId === vault.id 
+                          ? "bg-[#E84855] text-white px-2" 
+                          : "bg-[#302945]/50 text-[#8F8A9B] hover:text-[#E84855]"
+                      )}
+                    >
+                      <Trash2 size={14} />
+                      {deletingVaultId === vault.id && (
+                        <span className="text-[8px] font-black uppercase tracking-tighter">Удалить?</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-between items-end mb-3">
                 <div>
-                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-1 uppercase">Current</p>
+                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-1 uppercase">Накоплено</p>
                   <p className={cn('text-xl font-black', isComplete ? 'text-[#2BCB8A]' : 'text-white')}>
                     {formatKGS(vault.current)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-1 uppercase">Target</p>
+                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-1 uppercase">Цель</p>
                   <p className="text-sm font-bold text-[#8F8A9B]">{formatKGS(vault.target)}</p>
                 </div>
               </div>
@@ -200,12 +250,12 @@ export default function VaultsScreen() {
                              flex items-center justify-center gap-2"
                 >
                   <Zap size={15} />
-                  ACCELERATE GOAL
+                  УСКОРИТЬ ЦЕЛЬ
                 </button>
               )}
 
               <p className="text-[8px] font-bold tracking-widest text-[#8F8A9B] text-center mt-4 uppercase">
-                Available based on your {runwayDays}-day runway
+                Доступно на основе вашего {runwayDays}-дневного Runway
               </p>
             </GlassCard>
           );
@@ -246,7 +296,7 @@ export default function VaultsScreen() {
               className="relative w-full max-w-sm bg-[#1D172F] border border-[#302945] rounded-3xl p-8 shadow-2xl"
             >
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xl font-black text-white">Accelerate Goal</h3>
+                <h3 className="text-xl font-black text-white">Ускорить цель</h3>
                 <button
                   onClick={() => { setAccelerateVaultId(null); setCustomAmount(''); }}
                   className="text-[#8F8A9B]"
@@ -321,7 +371,7 @@ export default function VaultsScreen() {
               className="relative w-full max-w-sm bg-[#1D172F] border border-[#302945] rounded-3xl p-8 shadow-2xl"
             >
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-black text-white">New Vault</h3>
+                <h3 className="text-xl font-black text-white">Новый сейф</h3>
                 <button onClick={() => setShowAddModal(false)} className="text-[#8F8A9B]">
                   <X size={24} />
                 </button>
@@ -329,27 +379,27 @@ export default function VaultsScreen() {
 
               <div className="space-y-4 mb-8">
                 <div>
-                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-2 uppercase">Title</p>
+                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-2 uppercase">Название</p>
                   <input
                     type="text"
-                    placeholder="e.g. New Car"
+                    placeholder="Напр. Машина"
                     value={newVault.title}
                     onChange={e => setNewVault({ ...newVault, title: e.target.value })}
                     className="w-full bg-[#110C1E] border border-[#302945] rounded-xl p-4 text-white font-bold focus:outline-none focus:border-[#B685FF]"
                   />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-2 uppercase">Monthly Target</p>
+                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-2 uppercase">Сумма цели</p>
                   <input
                     type="number"
-                    placeholder="Amount"
+                    placeholder="Введите сумму"
                     value={newVault.target}
                     onChange={e => setNewVault({ ...newVault, target: e.target.value })}
                     className="w-full bg-[#110C1E] border border-[#302945] rounded-xl p-4 text-white font-bold focus:outline-none focus:border-[#B685FF]"
                   />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-2 uppercase">Priority</p>
+                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-2 uppercase">Приоритет</p>
                   <div className="grid grid-cols-2 gap-2">
                     {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as Vault['priority'][]).map(p => (
                       <button
@@ -362,7 +412,7 @@ export default function VaultsScreen() {
                             : 'bg-[#110C1E] border-[#302945] text-[#8F8A9B]'
                         )}
                       >
-                        {p}
+                        {p === 'CRITICAL' ? 'КРИТИЧНЫЙ' : p === 'HIGH' ? 'ВЫСОКИЙ' : p === 'MEDIUM' ? 'СРЕДНИЙ' : 'НИЗКИЙ'}
                       </button>
                     ))}
                   </div>
@@ -371,10 +421,58 @@ export default function VaultsScreen() {
 
               <button
                 onClick={handleAddVault}
-                className="w-full py-4 bg-[#B685FF] text-[#110C1E] rounded-xl font-black tracking-widest shadow-[0_0_20px_rgba(182,133,255,0.3)]"
+                className="w-full py-4 bg-[#B685FF] text-[#110C1E] rounded-xl font-black tracking-widest shadow-[0_0_20px_rgba(182,133,255,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                CREATE VAULT
+                СОЗДАТЬ СЕЙФ
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Edit Vault Modal ── */}
+      <AnimatePresence>
+        {editVaultId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-[#0F0B19]/80 backdrop-blur-sm"
+              onClick={() => setEditVaultId(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-sm bg-[#1D172F] border border-[#302945] rounded-3xl p-8 shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black text-white italic uppercase">Настройки сейфа</h3>
+                <button onClick={() => setEditVaultId(null)} className="text-[#8F8A9B]"><X size={24} /></button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-2 uppercase">Изменить цель (Target)</p>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editTarget}
+                    onChange={(e) => setEditTarget(e.target.value.replace(/[^0-9]/g, ''))}
+                    className="w-full bg-[#110C1E] border border-[#302945] rounded-xl px-4 py-3 text-white font-mono text-lg focus:outline-none focus:border-[#B685FF]"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    updateVault(editVaultId, { target: Number(editTarget) });
+                    setEditVaultId(null);
+                    showToast('Сейф обновлен');
+                  }}
+                  className="w-full py-4 bg-[#B685FF] text-[#110C1E] rounded-xl font-black tracking-widest uppercase italic shadow-[0_0_20px_rgba(182,133,255,0.4)]"
+                >
+                  СОХРАНИТЬ
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
