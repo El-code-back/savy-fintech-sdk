@@ -2,14 +2,20 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
+import { createAssistantHandler } from './server/assistant';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    plugins: [react(), tailwindcss()],
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-    },
+    plugins: [react(), tailwindcss(), {
+      name: 'savy-assistant',
+      configureServer(server) {
+        server.middlewares.use('/api/chat', createAssistantHandler(env));
+      },
+      configurePreviewServer(server) {
+        server.middlewares.use('/api/chat', createAssistantHandler(env));
+      },
+    }],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),

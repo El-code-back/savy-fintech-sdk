@@ -1,161 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CreditCard, MessageCircle, Info } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { formatKGS, cn } from '@/lib/utils';
+import { budgetSummary, loanScenario } from '@/lib/finance';
+import { formatKGS } from '@/lib/utils';
 import { GlassCard } from '@/components/shared/UI';
-import { ShieldCheck, Rocket, Zap, ArrowRight, Plus, Bell, TrendingUp } from 'lucide-react';
 
 export default function CreditsScreen() {
-  const { creditLimit, runwayDays } = useApp();
-
+  const app = useApp();
+  const navigate = useNavigate();
+  const [amount, setAmount] = useState('20000');
+  const [months, setMonths] = useState(12);
+  const [annualRate, setAnnualRate] = useState('18');
+  const principal = Number(amount);
+  const rate = Number(annualRate);
+  const valid = amount.trim() !== '' && annualRate.trim() !== '' && Number.isFinite(principal) && principal >= 1000 && principal <= 10000000 && Number.isFinite(rate) && rate >= 0 && rate <= 100;
+  const budget = budgetSummary(app);
+  const scenario = valid ? loanScenario(principal, months, rate, app) : null;
+  const warnings = scenario ? [
+    ...(scenario.budgetDeficit ? ['Платёж превышает остаток месячного дохода после целей сейфов. Потребуется пересмотреть сумму или расходы.'] : []),
+    ...(scenario.lowReserve ? ['Текущий запас денег меньше 14 дней или пока не рассчитан. Сначала оцените обязательные платежи и резерв.'] : []),
+    ...(scenario.hasInternalDebt ? ['Из важных сейфов уже забирали деньги. Учтите их восстановление перед новым обязательством.'] : []),
+  ] : [];
   return (
-    <div className="pb-32 pt-10 px-6">
-      <header className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 overflow-hidden border-2 border-[#B685FF]">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
-          </div>
-          <h1 className="text-xl font-black tracking-tighter text-white uppercase italic">Savy</h1>
-        </div>
-        <button className="text-white">
-          <Bell size={24} />
-        </button>
-      </header>
-
-      <GlassCard className="mb-6">
-        <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-2 uppercase">Кредитный лимит</p>
-        <p className="text-4xl font-black text-[#B685FF] mb-6">{formatKGS(creditLimit)}</p>
-        <div className="bg-[#110C1E] rounded-xl p-4 flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#2BCB8A] shadow-[0_0_8px_#2BCB8A]" />
-          <p className="text-xs font-medium text-[#8F8A9B]">
-            Рассчитано на основе вашего <span className="text-white">Runway ({runwayDays} дн.)</span>
-          </p>
-        </div>
+    <div className="pb-32 pt-10 px-5 max-w-xl mx-auto">
+      <header className="mb-7"><p className="text-xs text-[#B685FF] mb-2">Savy · Кредиты</p><h1 className="text-2xl font-bold text-white">Как платёж впишется в бюджет?</h1><p className="text-sm text-[#8F8A9B] mt-3">Сравните условия и посмотрите, сколько останется на ваши цели.</p></header>
+      <GlassCard className="mb-5">
+        <div className="flex items-center gap-2 mb-4"><CreditCard size={20} className="text-[#B685FF]" /><h2 className="text-white font-bold">Ваши возможности</h2></div>
+        <dl className="space-y-3 text-sm">
+          <div className="flex justify-between gap-3"><dt className="text-[#8F8A9B]">Доход в месяц</dt><dd className="text-white">{formatKGS(app.monthlyIncome)}</dd></div>
+          <div className="flex justify-between gap-3"><dt className="text-[#8F8A9B]">Цели сейфов в месяц</dt><dd className="text-white">{formatKGS(budget.monthlyExpenses)}</dd></div>
+          <div className="flex justify-between gap-3 border-t border-[#302945] pt-3"><dt className="text-[#8F8A9B]">Остаток до нового кредита</dt><dd className="text-[#B685FF] font-bold">{formatKGS(budget.monthlySurplus)}</dd></div>
+        </dl>
+        <p className="text-xs text-[#8F8A9B] mt-4">Расчёт учитывает введённые цели сейфов. Другие регулярные расходы и платежи нужно учесть отдельно.</p>
       </GlassCard>
-
-      <GlassCard className="flex items-center gap-4 mb-10 py-4">
-        <div className="p-2.5 bg-[#2BCB8A]/10 rounded-xl">
-          <ShieldCheck className="text-[#2BCB8A]" size={20} />
+      <section className="mb-5" aria-label="Персональные сценарии">
+        <h2 className="font-bold text-white mb-3">Персонально для вас</h2>
+        {budget.runwayDays !== null && budget.runwayDays >= 20 && app.internalDebt === 0 ? <GlassCard className="mb-3">
+          <h3 className="text-white font-semibold">Укрепить накопления</h3><p className="text-sm text-[#8F8A9B] mt-2">Ваш запас — {budget.runwayDays} дней. Сравните цель накоплений с новым платежом, прежде чем брать кредит.</p><button onClick={() => navigate('/vaults')} className="text-sm text-[#B685FF] mt-3">К целям и сейфам →</button>
+        </GlassCard> : <GlassCard className="mb-3">
+          <h3 className="text-white font-semibold">Сначала проверить резерв</h3><p className="text-sm text-[#8F8A9B] mt-2">{app.internalDebt > 0 ? 'В важных сейфах есть сумма к восстановлению.' : 'Текущий запас денег пока невелик.'} Сравните новый платёж с обязательными расходами и возможностью обойтись без займа.</p><button onClick={() => navigate('/insights', { state: { question: 'Как восстановить резерв без нового кредита при моём бюджете?' } })} className="text-sm text-[#B685FF] mt-3">Обсудить план с помощником →</button>
+        </GlassCard>}
+        <div className="grid grid-cols-2 gap-3">
+          {[{ title: 'Небольшая сумма', value: 10000, term: 6 }, { title: 'Крупная покупка', value: 50000, term: 24 }].map(preset => <button key={preset.title} onClick={() => { setAmount(String(preset.value)); setMonths(preset.term); }} className="text-left rounded-2xl border border-[#302945] p-4 hover:border-[#B685FF]">
+            <span className="block text-sm text-white font-semibold">{preset.title}</span><span className="block text-xs text-[#8F8A9B] mt-2">{formatKGS(preset.value)} · {preset.term} мес.</span><span className="block text-xs text-[#B685FF] mt-2">Рассчитать →</span>
+          </button>)}
         </div>
-        <div className="flex-1">
-          <h4 className="text-sm font-bold text-white">Runway под защитой</h4>
-          <p className="text-[10px] text-[#8F8A9B]">Ваш лимит настроен так, чтобы Runway не падал ниже 14 дней</p>
+      </section>
+      <GlassCard className="mb-5">
+        <h2 className="text-lg text-white font-bold mb-1">Проверьте свой вариант</h2><p className="text-xs text-[#8F8A9B] mb-5">Учебный расчёт. Введите ставку из условий банка.</p>
+        <div className="space-y-4">
+          <label className="block text-sm text-[#8F8A9B]">Сумма, сом<input type="number" min="1000" max="10000000" value={amount} onChange={e => setAmount(e.target.value)} className="block w-full mt-2 p-3 rounded-xl bg-[#110C1E] border border-[#302945] text-white" /></label>
+          <label className="block text-sm text-[#8F8A9B]">Срок<select value={months} onChange={e => setMonths(Number(e.target.value))} className="block w-full mt-2 p-3 rounded-xl bg-[#110C1E] border border-[#302945] text-white">{[3, 6, 12, 24, 36].map(m => <option key={m} value={m}>{m} мес.</option>)}</select></label>
+          <label className="block text-sm text-[#8F8A9B]">Годовая ставка, %<input type="number" min="0" max="100" step="0.1" value={annualRate} onChange={e => setAnnualRate(e.target.value)} className="block w-full mt-2 p-3 rounded-xl bg-[#110C1E] border border-[#302945] text-white" /></label>
         </div>
-        <button className="text-[#8F8A9B]">
-          <ArrowRight size={16} />
-        </button>
+        {!valid && <p role="alert" className="text-sm text-[#EFA5AE] mt-4">Введите сумму от 1 000 до 10 000 000 сомов и ставку от 0 до 100%.</p>}
+        {scenario && <div aria-live="polite" className="mt-6 border-t border-[#302945] pt-5">
+          <p className="text-xs text-[#8F8A9B]">Примерный платёж в месяц</p><p className="text-3xl font-bold text-[#B685FF] mt-1">{formatKGS(scenario.payment)}</p>
+          <dl className="space-y-3 text-sm mt-5">
+            <div className="flex justify-between gap-3"><dt className="text-[#8F8A9B]">Всего выплатите</dt><dd className="text-white">{formatKGS(scenario.total)}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-[#8F8A9B]">Переплата</dt><dd className="text-white">{formatKGS(scenario.overpayment)}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-[#8F8A9B]">Останется в месяц</dt><dd className={scenario.budgetDeficit ? 'text-[#EFA5AE]' : 'text-white'}>{formatKGS(scenario.remainingPerMonth)}</dd></div>
+          </dl>
+          <div className="mt-5 space-y-3">{warnings.length ? warnings.map(warning => <p key={warning} className="text-sm leading-relaxed text-[#F1C27D] bg-[#F1C27D]/5 rounded-xl p-3">{warning}</p>) : <p className="text-sm text-[#8F8A9B]">По введённым данным платёж помещается в месячный остаток. Проверьте также остальные обязательства и нерегулярные траты.</p>}</div>
+          <button onClick={() => navigate('/insights', { state: { question: `Помоги оценить учебный кредит: сумма ${principal} сомов, срок ${months} мес., ставка ${rate}% годовых. Платёж около ${Math.round(scenario.payment)} сомов в месяц, переплата около ${Math.round(scenario.overpayment)} сомов. После целей сейфов и платежа останется ${Math.round(scenario.remainingPerMonth)} сомов в месяц. Что учесть при моём текущем бюджете?` } })} className="w-full flex items-center justify-center gap-2 mt-5 p-3 rounded-xl bg-[#B685FF] text-[#110C1E] font-semibold text-sm"><MessageCircle size={18} />Обсудить с помощником</button>
+        </div>}
       </GlassCard>
-
-      <h2 className="text-xs font-bold tracking-[0.2em] text-white mb-6 uppercase italic">Преложения для вас</h2>
-      
-      <div className="mb-10 space-y-4">
-        {runwayDays > 20 ? (
-          <GlassCard className="border-[#2BCB8A]/30 bg-[#2BCB8A]/5">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#2BCB8A] flex items-center justify-center shadow-[0_0_15px_rgba(43,203,138,0.4)]">
-                <TrendingUp className="text-[#110C1E]" size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-white italic uppercase">Инвест-копилка</h3>
-                <p className="text-[10px] font-bold text-[#2BCB8A] uppercase">Бонус за высокий Runway</p>
-              </div>
-            </div>
-            <p className="text-xs text-[#8F8A9B] mb-6 leading-relaxed">
-              Ваш Runway превышает 20 дней! Откройте депозит под <span className="text-white font-bold">14% годовых</span> и заставьте ваши свободные средства работать.
-            </p>
-            <button className="w-full py-3 bg-[#2BCB8A] text-[#110C1E] rounded-xl font-bold text-xs tracking-widest uppercase italic">
-              Открыть депозит
-            </button>
-          </GlassCard>
-        ) : runwayDays < 7 ? (
-          <GlassCard className="border-[#E84855]/30 bg-[#E84855]/5">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#E84855] flex items-center justify-center shadow-[0_0_15px_rgba(232,72,85,0.4)]">
-                <Zap className="text-white" size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-white italic uppercase">Подпитка Runway</h3>
-                <p className="text-[10px] font-bold text-[#E84855] uppercase">Критическая поддержка</p>
-              </div>
-            </div>
-            <p className="text-xs text-[#8F8A9B] mb-6 leading-relaxed">
-              Ваш Runway критически мал (менее 7 дней). Получите микрокредит на пополнение под <span className="text-white font-bold">0.1% в день</span> для стабилизации.
-            </p>
-            <button className="w-full py-3 bg-[#E84855] text-white rounded-xl font-bold text-xs tracking-widest uppercase italic">
-              Пополнить Runway
-            </button>
-          </GlassCard>
-        ) : (
-          <p className="text-center py-8 text-[10px] font-bold text-[#4F4765] tracking-widest uppercase border border-dashed border-[#302945] rounded-2xl">
-            Поддерживайте высокий Runway для предложений
-          </p>
-        )}
-      </div>
-
-      <h2 className="text-xs font-bold tracking-[0.2em] text-white mb-6 uppercase italic">Доступные кредиты</h2>
-
-      <div className="space-y-4">
-        <CreditItem
-          icon={Rocket}
-          title="Заполнение пробелов"
-          apr="15% в год"
-          limit={100000}
-          tag="Мгновенная выплата"
-          actionIcon={Plus}
-          actionColor="#B685FF"
-        />
-        <CreditItem
-          icon={Zap}
-          title="Экспресс-кредит"
-          apr="18% в год"
-          limit={50000}
-          tag="Критический приоритет"
-          actionIcon={ArrowRight}
-          isCritical
-        />
-      </div>
+      <p className="flex gap-2 text-xs text-[#8F8A9B] leading-relaxed"><Info size={16} className="shrink-0" />Равные ежемесячные платежи, без комиссий и страховок. Это оценка сценария, а не предложение банка или одобренный лимит.</p>
     </div>
   );
 }
-
-const CreditItem = ({ icon: Icon, title, apr, limit, tag, actionIcon: ActionIcon, actionColor, isCritical }: any) => (
-  <GlassCard>
-    <div className="flex items-center gap-4 mb-6">
-      <div className="w-12 h-12 rounded-2xl bg-[#302945] flex items-center justify-center">
-        <Icon className={isCritical ? "text-[#E84855]" : "text-[#B685FF]"} size={24} />
-      </div>
-      <div className="flex-1">
-        <h4 className="text-lg font-bold text-white">{title}</h4>
-        <span className={cn(
-          "inline-block px-2 py-0.5 rounded-md text-[8px] font-bold mt-1",
-          isCritical ? "bg-[#E84855]/10 text-[#E84855]" : "bg-[#2BCB8A]/10 text-[#2BCB8A]"
-        )}>
-          {apr}
-        </span>
-      </div>
-      <button className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90",
-        ActionIcon === Plus ? "bg-[#B685FF] text-[#110C1E]" : "border border-[#302945] text-white"
-      )}>
-        <ActionIcon size={20} />
-      </button>
-    </div>
-
-    {isCritical && (
-      <p className="text-[10px] text-[#8F8A9B] leading-relaxed mb-6 italic">
-        Создано для экстренных ситуаций. Без бумажной волокиты при сумме до 20 000 KGS.
-      </p>
-    )}
-
-    <div className="flex justify-between items-end">
-      <div>
-        <p className="text-[10px] font-bold tracking-widest text-[#8F8A9B] mb-1 uppercase">
-          {isCritical ? "Доступно до" : "Макс. лимит"}
-        </p>
-        <p className="text-xl font-black text-white">{formatKGS(limit)}</p>
-      </div>
-      <p className={cn("text-[10px] font-bold uppercase tracking-tight", isCritical ? "text-[#E84855]" : "text-[#8F8A9B]")}>
-        {tag}
-      </p>
-    </div>
-  </GlassCard>
-);

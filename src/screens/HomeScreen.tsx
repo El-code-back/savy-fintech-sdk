@@ -20,8 +20,7 @@ export default function HomeScreen() {
     plannedSpends,
     addFutureSpend,
     toggleFutureSpend,
-    monthlyIncome,
-    monthlyExpenses
+    deleteFutureSpend
   } = useApp();
   
   const [showIncomeModal, setShowIncomeModal] = useState(false);
@@ -171,18 +170,11 @@ export default function HomeScreen() {
           <div>
             <p className="text-2xl font-black text-white">
               {(() => {
-                const targetDaily = burnRate;
                 const capacityDaily = Math.max(0, (actualAvailable - reserved) / 30);
-                const suggested = Math.min(targetDaily, capacityDaily);
-                const floor = actualAvailable > 500 ? 500 : actualAvailable;
-                const final = Math.max(floor, suggested);
-                
-                const min = Math.round((final * 0.8) / 100) * 100;
-                const max = Math.round((final * 1.0) / 100) * 100;
-                return `${formatKGS(min)} – ${formatKGS(max)}`;
+                return `до ${formatKGS(Math.floor(capacityDaily))}`;
               })()}
             </p>
-            <p className="text-[9px] font-bold text-[#2BCB8A] uppercase tracking-wider mt-1">в день (экономный режим)</p>
+            <p className="text-[9px] font-bold text-[#2BCB8A] uppercase tracking-wider mt-1">в день, если распределить остаток на 30 дней</p>
           </div>
           <div className="flex items-end gap-1 h-8">
             {[0.4, 0.6, 0.3, 0.8, 0.5, 1].map((h, i) => (
@@ -336,12 +328,8 @@ export default function HomeScreen() {
 
               <div className="space-y-4 mb-8 font-mono">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#8F8A9B] uppercase font-bold tracking-tighter">Месячный доход</span>
-                  <span className="text-white font-black">{formatKGS(monthlyIncome)}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#8F8A9B] uppercase font-bold tracking-tighter">Обязательные платежи</span>
-                  <span className="text-[#E84855] font-black">-{formatKGS(monthlyExpenses)}</span>
+                  <span className="text-[#8F8A9B] uppercase font-bold tracking-tighter">Свободный остаток вне сейфов</span>
+                  <span className="text-white font-black">{formatKGS(actualAvailable)}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-[#8F8A9B] uppercase font-bold tracking-tighter">План будущих трат</span>
@@ -350,10 +338,10 @@ export default function HomeScreen() {
                 <div className="h-px bg-[#302945] my-2" />
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] text-white uppercase font-black tracking-widest">Итог на «жизнь»</span>
-                  <span className="text-xl font-black text-white">{formatKGS(actualAvailable - reserved)}</span>
+                  <span className="text-xl font-black text-white">{formatKGS(Math.max(0, actualAvailable - reserved))}</span>
                 </div>
                 <p className="text-[10px] text-[#8F8A9B] leading-relaxed italic">
-                  Результат делится на 30 дней до следующего пополнения.
+                  Для дневного бюджета делим доступный остаток на 30 дней. Запас в днях считаем отдельно: остаток делим на средний дневной расход по целям сейфов. Деньги в сейфах повторно не вычитаются.
                 </p>
               </div>
 
@@ -361,7 +349,7 @@ export default function HomeScreen() {
                 <div className="bg-[#2BCB8A]/10 border border-[#2BCB8A]/20 rounded-2xl p-4 flex gap-3">
                   <Info className="text-[#2BCB8A] shrink-0" size={20} />
                   <p className="text-[10px] font-bold text-[#2BCB8A] leading-relaxed">
-                    В этом месяце поток чуть ниже обычного, поэтому мы немного скорректировали твой чек, чтобы ты не заходил в долги.
+                    Это оценка по введённым данным. Если обязательные будущие траты превышают свободный остаток, дневной бюджет равен нулю — пересмотрите план расходов.
                   </p>
                 </div>
               )}
