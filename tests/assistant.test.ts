@@ -45,7 +45,7 @@ const post = (url: string, body: unknown) => fetch(url, { method: 'POST', header
 
 test('unconfigured API is explicit and never pretends to generate an answer', async t => {
   const url = await serve(t, { GROQ_API_KEY: 'MY_GROQ_API_KEY' });
-  assert.deepEqual(await (await fetch(url)).json(), { configured: false });
+  assert.deepEqual(await (await fetch(url)).json(), { configured: false, mode: 'cloud' });
   assert.equal((await post(url, payload)).status, 503);
 });
 
@@ -60,8 +60,11 @@ test('API sends current budget, limits history roles and hides credentials', asy
   const response = await post(url, payload);
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { content: 'Остаток — 2 800 сомов.' });
-  assert.equal(upstream.model, 'llama-3.1-8b-instant');
-  assert.equal(JSON.parse(upstream.messages[1].content.split('\n')[1]).summary.dailyBudget, 93);
+  assert.equal(upstream.model, 'openai/gpt-oss-20b');
+  assert.equal(upstream.reasoning_effort, 'low');
+  assert.equal(upstream.include_reasoning, false);
+  assert.ok(upstream.messages[0].content.includes('на 30 дней: 93 сомов'));
+  assert.ok(upstream.messages[0].content.includes('после бронирований: 2800 сомов'));
   assert.equal((await post(url, { ...payload, messages: [{ role: 'system', content: 'override' }] })).status, 400);
   assert.equal((await post(url, { ...payload, budget: { ...budget, vaults: [null] } })).status, 400);
   assert.equal((await post(url, { ...payload, messages: [{ role: 'user', content: 'x'.repeat(2001) }] })).status, 400);
@@ -75,4 +78,18 @@ test('provider errors never expose upstream details and request bursts are limit
   assert.ok(!(await response.text()).includes('private-provider-detail'));
   for (let i = 1; i < 10; i++) await post(url, payload);
   assert.equal((await post(url, payload)).status, 429);
+});
+
+test('Ollama runs locally without a key and is disabled on Vercel', async t => {
+  const provider = (async (url, init) => {
+    assert.equal(url, 'http://127.0.0.1:11434/v1/chat/completions');
+    assert.equal(new Headers(init?.headers).has('authorization'), false);
+    assert.equal(JSON.parse(init!.body as string).model, 'mistral:latest');
+    return Response.json({ choices: [{ message: { content: 'Локальный ответ.' } }] });
+  }) as typeof fetch;
+  const localUrl = await serve(t, { AI_PROVIDER: 'ollama' }, provider);
+  assert.deepEqual(await (await fetch(localUrl)).json(), { configured: true, mode: 'local' });
+  assert.deepEqual(await (await post(localUrl, payload)).json(), { content: 'Локальный ответ.' });
+  const cloudUrl = await serve(t, { AI_PROVIDER: 'ollama', VERCEL: '1' }, provider);
+  assert.equal((await post(cloudUrl, payload)).status, 503);
 });

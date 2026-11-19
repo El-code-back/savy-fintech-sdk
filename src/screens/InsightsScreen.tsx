@@ -16,6 +16,7 @@ export default function InsightsScreen() {
   const [input, setInput] = useState(() => (location.state?.question as string) || '');
   const [status, setStatus] = useState<'checking' | 'ready' | 'unconfigured' | 'offline'>('checking');
   const [isLoading, setIsLoading] = useState(false);
+  const [mode, setMode] = useState<'local' | 'cloud'>('cloud');
   const [error, setError] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const pendingRef = useRef(false);
@@ -30,6 +31,7 @@ export default function InsightsScreen() {
         if (!response.ok) throw new Error();
         const data = await response.json();
         if (typeof data.configured !== 'boolean') throw new Error();
+        if (active) setMode(data.mode === 'local' ? 'local' : 'cloud');
         if (active) setStatus(data.configured ? 'ready' : 'unconfigured');
       })
       .catch(() => { if (active) setStatus('offline'); })
@@ -47,7 +49,7 @@ export default function InsightsScreen() {
     setMessages(history); setInput(''); setError(''); setIsLoading(true);
     const controller = new AbortController();
     requestRef.current = controller;
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), mode === 'local' ? 125000 : 30000);
     try {
       const response = await fetch('/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal,
@@ -76,7 +78,7 @@ export default function InsightsScreen() {
       <header className="shrink-0 px-5 pt-8 pb-4 border-b border-[#302945]">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-2xl bg-[#B685FF]/20"><Bot className="text-[#B685FF]" size={22} /></div>
-          <div className="flex-1"><h1 className="font-bold text-white">Помощник Savy</h1><p className="text-xs text-[#8F8A9B]">{status === 'checking' ? 'Проверяем подключение…' : available ? 'Обсудим ваш бюджет' : 'AI пока недоступен'}</p></div>
+          <div className="flex-1"><h1 className="font-bold text-white">Помощник Savy</h1><p className="text-xs text-[#8F8A9B]">{status === 'checking' ? 'Проверяем подключение…' : available ? mode === 'local' ? 'Локальная модель · на этом компьютере' : 'Обсудим ваш бюджет' : 'AI пока недоступен'}</p></div>
           <button aria-label="Начать новый диалог" disabled={isLoading} onClick={() => { setMessages([]); setError(''); setInput(''); }} className="p-2 text-[#8F8A9B] disabled:opacity-30"><RotateCcw size={18} /></button>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
@@ -99,7 +101,7 @@ export default function InsightsScreen() {
           <textarea aria-label="Вопрос помощнику" maxLength={2000} rows={2} value={input} onChange={event => setInput(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void sendMessage(input); } }} placeholder="Например: потяну ли я платёж 3 000 сомов?" disabled={isLoading} className="flex-1 min-w-0 resize-none rounded-xl bg-[#1D172F] border border-[#302945] px-3 py-2 text-sm text-white outline-none focus:border-[#B685FF]" />
           <button type="submit" aria-label="Отправить вопрос" disabled={!available || isLoading || !input.trim()} className="p-3 rounded-xl bg-[#B685FF] text-[#110C1E] disabled:opacity-30"><Send size={18} /></button>
         </form>
-        <p className="text-[10px] text-[#8F8A9B] mt-2">При отправке вопрос и суммы бюджета передаются AI-сервису. Ответы могут содержать ошибки.</p>
+        <p className="text-[10px] text-[#8F8A9B] mt-2">{mode === 'local' ? 'Ответ формируется на этом компьютере. Первый ответ может занять до двух минут.' : 'При отправке вопрос и суммы бюджета передаются AI-сервису.'} Ответы могут содержать ошибки.</p>
       </div>
     </div>
   );
