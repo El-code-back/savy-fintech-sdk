@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { budgetSummary, type BudgetInput } from '../src/lib/finance.ts';
+import { budgetSummary, type BudgetInput } from '../src/lib/finance.js';
 
 const SYSTEM_PROMPT = `Ты — помощник Savy по личному бюджету. Отвечай на русском, просто, до 6 предложений.
 Отвечай на вопрос, объясняй числа и предлагай один выполнимый шаг. Используй актуальный снимок бюджета.
